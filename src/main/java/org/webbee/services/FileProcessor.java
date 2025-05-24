@@ -23,15 +23,13 @@ public class FileProcessor {
         this.path = path;
     }
 
-    public void process() throws Exception {
-
+    public void process() {
         try (Stream<Path> paths = Files.walk(Paths.get(path))) {
             paths.filter(Files::isRegularFile).filter(p -> p.toString().endsWith(".log")).forEach(this::processFile);
             users.values().stream().forEach(User::balanceSummary);
             writeLogs(Paths.get(path));
         } catch (Exception e) {
             System.err.println(e);
-
         }
 
     }
