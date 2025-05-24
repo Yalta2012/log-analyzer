@@ -1,4 +1,4 @@
-package org.weebee.models;
+package org.webbee.models;
 
 public enum TransactionType {
     INQUIRY("balance inquiry"),

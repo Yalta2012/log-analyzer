@@ -1,20 +1,21 @@
-package org.weebee.services;
+package org.webbee.services;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.weebee.models.TransactionType;
-import org.weebee.models.Transaction;
+
+import org.webbee.models.Transaction;
+import org.webbee.models.TransactionType;
 
 public class LineReader {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final Pattern pattern = Pattern.compile(
-            "^\\[(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})\\] (\\w+) (balance inquiry|transferred|withdrew|final balance) (\\d+\\.?\\d*)( to (\\w+))?\\s*$");
+            "^\\[(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})\\] (\\w+) (balance inquiry|transferred|withdrew|final balance) (-?\\d+\\.?\\d*)( to (\\w+))?\\s*$");
 
-    public static Transaction readLine(String line) {
-        
+    public static Transaction readLine(String line) throws Exception {
+
         Matcher matcher = pattern.matcher(line);
         Transaction result;
 
@@ -45,7 +46,7 @@ public class LineReader {
             result = new Transaction(dateTime, userName, type, value, anotherUserName);
 
         } else {
-            return null;
+            throw new Exception("Unvalid line: \"" + line + "\"");
         }
         return result;
     }

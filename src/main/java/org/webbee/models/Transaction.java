@@ -1,4 +1,4 @@
-package org.weebee.models;
+package org.webbee.models;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

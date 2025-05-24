@@ -1,11 +1,12 @@
-package org.weebee.services;
+package org.webbee.services;
 
 import java.util.HashMap;
 import java.util.stream.Stream;
 
-import org.weebee.models.Transaction;
-import org.weebee.models.TransactionType;
-import org.weebee.models.User;
+import org.webbee.models.Transaction;
+import org.webbee.models.TransactionType;
+import org.webbee.models.User;
+
 import java.io.BufferedWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,7 +23,7 @@ public class FileProcessor {
         this.path = path;
     }
 
-    public void process() throws IOException, Exception {
+    public void process() throws Exception {
 
         try (Stream<Path> paths = Files.walk(Paths.get(path))) {
             paths.filter(Files::isRegularFile).filter(p -> p.toString().endsWith(".log")).forEach(this::processFile);
@@ -30,13 +31,14 @@ public class FileProcessor {
             writeLogs(Paths.get(path));
         } catch (Exception e) {
             System.err.println(e);
+
         }
 
     }
 
     private void processFile(Path path) {
-        try (Stream<String> lines = Files.lines(path)) {
-            lines.forEach(s -> {
+        try {
+            for (String s : Files.lines(path).toList()) {
                 Transaction transaction = LineReader.readLine(s);
                 if (!users.containsKey(transaction.getUserName())) {
                     users.put(transaction.getUserName(), new User(transaction.getUserName()));
@@ -49,10 +51,9 @@ public class FileProcessor {
                         && !users.get(transaction.getUserName()).equals(users.get(transaction.getAnotherUserName()))) {
                     users.get(transaction.getAnotherUserName()).addTransaction(transaction);
                 }
-            });
-
+            }
         } catch (Exception e) {
-            System.err.println("Что то пошло не так " + e);
+            System.err.println(e);
         }
 
     }
@@ -64,26 +65,27 @@ public class FileProcessor {
             if (Files.notExists(logDirPath)) {
                 Files.createDirectories(logDirPath);
             }
-
             for (User user : users.values()) {
                 Path filePath = logDirPath.resolve(user.getName() + ".log");
                 try (BufferedWriter writer = Files.newBufferedWriter(filePath)) {
 
                     for (Transaction transaction : user.getTransactions()) {
-                        writer.write(transaction.toString());
-                        writer.newLine();
+                        if (transaction.getType() != TransactionType.FINAL) {
+                            writer.write(transaction.toString());
+                            writer.newLine();
+                        }
                     }
                     writer.write(
                             new Transaction(LocalDateTime.now(), user.getName(), TransactionType.FINAL,
                                     user.getBalance(), null)
                                     .toString());
                 } catch (Exception e) {
-
+                    throw e;
                 }
             }
 
         } catch (Exception e) {
-            // TODO: handle exception
+            System.err.println(e);
         }
 
     }

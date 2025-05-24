@@ -1,4 +1,4 @@
-package org.weebee.models;
+package org.webbee.models;
 
 import java.math.BigDecimal;
 import java.util.SortedSet;
@@ -33,8 +33,6 @@ public class User {
     }
 
     public void addTransaction(Transaction transaction) {
-        // if (transaction == null)
-        // throw new Exception("Adding null transaction");
         transactions.add(transaction);
     }
 
