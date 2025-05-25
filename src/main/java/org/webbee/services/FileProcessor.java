@@ -12,7 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.io.IOException;
 import java.lang.Exception;
 
 public class FileProcessor {
@@ -37,26 +36,53 @@ public class FileProcessor {
     private void processFile(Path path) {
         try {
             for (String s : Files.lines(path).toList()) {
-                Transaction transaction = LineReader.readLine(s);
-                if (!users.containsKey(transaction.getUserName())) {
-                    users.put(transaction.getUserName(), new User(transaction.getUserName()));
-                }
-                if (transaction.getAnotherUserName() != null && !users.containsKey(transaction.getAnotherUserName())) {
-                    users.put(transaction.getAnotherUserName(), new User(transaction.getAnotherUserName()));
-                }
-                users.get(transaction.getUserName()).addTransaction(transaction);
-                if (transaction.getAnotherUserName() != null
-                        && !users.get(transaction.getUserName()).equals(users.get(transaction.getAnotherUserName()))) {
-                    users.get(transaction.getAnotherUserName()).addTransaction(transaction);
+                try {
+                    Transaction transaction = LineReader.readLine(s);
+                    processTransaction(transaction);
+                } catch (Exception e) {
+                    System.err.println("Line parsing error: " + e);
                 }
             }
         } catch (Exception e) {
-            System.err.println(e);
-        }
+            System.err.println("File process error: " + e);
 
+        }
     }
 
-    private void writeLogs(Path path) throws IOException {
+    private void processTransaction(Transaction transaction) throws Exception {
+        if (!users.containsKey(transaction.getUserName())) {
+            users.put(transaction.getUserName(), new User(transaction.getUserName()));
+        }
+        if (transaction.getAnotherUserName() != null
+                && !users.containsKey(transaction.getAnotherUserName())) {
+            users.put(transaction.getAnotherUserName(), new User(transaction.getAnotherUserName()));
+        }
+        users.get(transaction.getUserName()).addTransaction(transaction);
+        if (transaction.getAnotherUserName() != null
+                && !users.get(transaction.getUserName())
+                        .equals(users.get(transaction.getAnotherUserName()))) {
+            users.get(transaction.getAnotherUserName()).addTransaction(transaction);
+        }
+    }
+
+    private void writeUserLogs(User user, Path filePath) throws Exception {
+        try (BufferedWriter writer = Files.newBufferedWriter(filePath)) {
+            for (Transaction transaction : user.getTransactions()) {
+                if (transaction.getType() != TransactionType.FINAL) {
+                    writer.write(transaction.toString());
+                    writer.newLine();
+                }
+            }
+            writer.write(
+                    new Transaction(LocalDateTime.now(), user.getName(), TransactionType.FINAL,
+                            user.getBalance(), null)
+                            .toString());
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    private void writeLogs(Path path) throws Exception {
         try {
             path = path.toAbsolutePath();
             Path logDirPath = path.resolve("transactions_by_users");
@@ -65,21 +91,7 @@ public class FileProcessor {
             }
             for (User user : users.values()) {
                 Path filePath = logDirPath.resolve(user.getName() + ".log");
-                try (BufferedWriter writer = Files.newBufferedWriter(filePath)) {
-
-                    for (Transaction transaction : user.getTransactions()) {
-                        if (transaction.getType() != TransactionType.FINAL) {
-                            writer.write(transaction.toString());
-                            writer.newLine();
-                        }
-                    }
-                    writer.write(
-                            new Transaction(LocalDateTime.now(), user.getName(), TransactionType.FINAL,
-                                    user.getBalance(), null)
-                                    .toString());
-                } catch (Exception e) {
-                    throw e;
-                }
+                writeUserLogs(user, filePath);
             }
 
         } catch (Exception e) {

@@ -48,6 +48,6 @@ java -jar target/log-analyzer-1.0-SNAPSHOT.jar <путь до папка с ло
 mkdir -p build/classes
 javac -d build/classes/ src/main/java/org/webbee/Main.java src/main/java/org/webbee/models/*.java src/main/java/org/webbee/services/*.java
 jar cfe build/log-analyzer.jar org.webbee.Main -C build/classes .
-java -jar build/log-analyzer.jar logs
+java -jar build/log-analyzer.jar <путь до папки с логами>
 ```
 
